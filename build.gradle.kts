@@ -13,6 +13,7 @@ allprojects {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
     implementation(kotlin("stdlib-jdk8"))
 
     implementation("org.apache.maven.shared:maven-dependency-analyzer:1.11.2")
