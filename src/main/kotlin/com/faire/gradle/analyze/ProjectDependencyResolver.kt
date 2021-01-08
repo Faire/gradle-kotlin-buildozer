@@ -11,20 +11,20 @@ import java.io.File
 import java.net.URLClassLoader
 
 open class ProjectDependencyAnalysis constructor(
-    val mainUsedUndeclaredArtifacts: Set<ResolvedArtifact>,
-    val testUsedUndeclaredArtifacts: Set<ResolvedArtifact>,
-    val mainUnusedDeclaredButUsedByTest: Set<ResolvedArtifact>,
-    val mainUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
-    val testUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
-    val testUnnecessaryDeclarations: Set<ResolvedArtifact>,
-    val mainUnnecessaryPermitUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
-    val testUnnecessaryPermitUnusedDeclaredArtifacts: Set<ResolvedArtifact>
+  val mainUsedUndeclaredArtifacts: Set<ResolvedArtifact>,
+  val testUsedUndeclaredArtifacts: Set<ResolvedArtifact>,
+  val mainUnusedDeclaredButUsedByTest: Set<ResolvedArtifact>,
+  val mainUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
+  val testUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
+  val testUnnecessaryDeclarations: Set<ResolvedArtifact>,
+  val mainUnnecessaryPermitUnusedDeclaredArtifacts: Set<ResolvedArtifact>,
+  val testUnnecessaryPermitUnusedDeclaredArtifacts: Set<ResolvedArtifact>
 )
 
 class ProjectDependencyResolver constructor(
-    private val project: Project,
-    private val mainClassesDirs: Iterable<File>,
-    private val testClassesDirs: Iterable<File>
+  private val project: Project,
+  private val mainClassesDirs: Iterable<File>,
+  private val testClassesDirs: Iterable<File>
 ) {
   private val classAnalyzer = DefaultClassAnalyzer()
   private val dependencyAnalyzer = ASMDependencyAnalyzer()
@@ -39,13 +39,13 @@ class ProjectDependencyResolver constructor(
     val permitTestUnusedDeclaredConfig = project.configurations.named("permitTestUnusedDeclared")
 
     val mainDependencyDeclarationNames =
-        implementationConfig.dependencies
-            .map { "${it.name}-${it.version}.jar" }
-            .toSet()
+      implementationConfig.dependencies
+        .map { "${it.name}-${it.version}.jar" }
+        .toSet()
     val testDependencyDeclarationNames =
-        testImplementationConfig.dependencies
-            .map { "${it.name}-${it.version}.jar" }
-            .toSet()
+      testImplementationConfig.dependencies
+        .map { "${it.name}-${it.version}.jar" }
+        .toSet()
 
     val mainRequiredDeps = getFirstLevelDependencies(mainCompileConfig.get())
     val testRequiredDeps = getFirstLevelDependencies(testCompileConfig.get())
@@ -60,18 +60,18 @@ class ProjectDependencyResolver constructor(
     val testDeclaredArtifactFiles = testDependencyArtifactFiles.filter { it.name in testDependencyDeclarationNames }
 
     val thisProjectOutputJarNameOrNull =
-        project.tasks.firstOrNull { it.name == "jar" }?.outputs?.files?.singleFile?.name
+      project.tasks.firstOrNull { it.name == "jar" }?.outputs?.files?.singleFile?.name
 
     val mainAllDependencyArtifacts = findAllModuleArtifacts(mainRequiredDeps)
     val testAllDependencyArtifacts = findAllModuleArtifacts(testRequiredDeps)
 
     val mainIndirectApiDependencyArtifactFiles = findIndirectApiModuleArtifactFiles(
-        mainRequiredDeps,
-        mainAllDependencyArtifacts
+      mainRequiredDeps,
+      mainAllDependencyArtifacts
     )
     val testIndirectApiDependencyArtifactFiles = findIndirectApiModuleArtifactFiles(
-        testRequiredDeps,
-        testAllDependencyArtifacts
+      testRequiredDeps,
+      testAllDependencyArtifacts
     )
 
     val mainFileClassMap = buildArtifactClassMap(mainAllDependencyArtifacts)
@@ -89,39 +89,39 @@ class ProjectDependencyResolver constructor(
 
     // Used and Undeclared
     val mainUsedUndeclaredArtifactFiles =
-        mainUsedArtifactFiles
-            .minus(mainDependencyArtifactFiles)
-            .minus(mainIndirectApiDependencyArtifactFiles)
-            .toSet()
+      mainUsedArtifactFiles
+        .minus(mainDependencyArtifactFiles)
+        .minus(mainIndirectApiDependencyArtifactFiles)
+        .toSet()
 
     val testUsedUndeclaredArtifactFiles =
-        testUsedArtifactFiles
-            .minus(testDependencyArtifactFiles)
-            .minus(testIndirectApiDependencyArtifactFiles)
-            .minus(mainUsedDeclaredArtifactFiles)
-            .filter { it.name != thisProjectOutputJarNameOrNull }
-            .toSet()
+      testUsedArtifactFiles
+        .minus(testDependencyArtifactFiles)
+        .minus(testIndirectApiDependencyArtifactFiles)
+        .minus(mainUsedDeclaredArtifactFiles)
+        .filter { it.name != thisProjectOutputJarNameOrNull }
+        .toSet()
 
     // Used by Test but not Main
     val mainUnusedDeclaredButUsedByTestArtifactFiles =
-        mainDependencyArtifactFiles
-            .minus(mainUsedArtifactFiles)
-            .minus(mainPermitUnusedDeclaredFiles)
-            .intersect(testUsedArtifactFiles)
+      mainDependencyArtifactFiles
+        .minus(mainUsedArtifactFiles)
+        .minus(mainPermitUnusedDeclaredFiles)
+        .intersect(testUsedArtifactFiles)
 
     // Unused Declared
     val mainUnusedDeclaredArtifactFiles =
-        mainDependencyArtifactFiles
-            .minus(mainUsedArtifactFiles)
-            .minus(mainPermitUnusedDeclaredFiles)
-            .minus(mainUnusedDeclaredButUsedByTestArtifactFiles)
+      mainDependencyArtifactFiles
+        .minus(mainUsedArtifactFiles)
+        .minus(mainPermitUnusedDeclaredFiles)
+        .minus(mainUnusedDeclaredButUsedByTestArtifactFiles)
     val testUnusedDeclaredArtifactFiles =
-        testDependencyArtifactFiles
-            .minus(mainUsedArtifactFiles)
-            .minus(mainPermitUnusedDeclaredFiles)
-            .minus(testPermitUnusedDeclaredFiles)
-            .minus(testUsedArtifactFiles)
-            .minus(mainUnusedDeclaredArtifactFiles)
+      testDependencyArtifactFiles
+        .minus(mainUsedArtifactFiles)
+        .minus(mainPermitUnusedDeclaredFiles)
+        .minus(testPermitUnusedDeclaredFiles)
+        .minus(testUsedArtifactFiles)
+        .minus(mainUnusedDeclaredArtifactFiles)
 
     // Declared by Test but already Declared by Main
     val testUnnecessaryDeclarationArtifactFiles = testDeclaredArtifactFiles.intersect(mainUsedDeclaredArtifactFiles)
@@ -137,12 +137,12 @@ class ProjectDependencyResolver constructor(
     logTitleStrings("mainDependencyArtifactFiles", mainDependencyArtifactFiles.map { it.name }.toSet())
     logTitleStrings("testDependencyArtifactFiles", testDependencyArtifactFiles.map { it.name }.toSet())
     logTitleStrings(
-        "mainIndirectApiDependencyArtifactFiles",
-        mainIndirectApiDependencyArtifactFiles.map { it.name }.toSet()
+      "mainIndirectApiDependencyArtifactFiles",
+      mainIndirectApiDependencyArtifactFiles.map { it.name }.toSet()
     )
     logTitleStrings(
-        "testIndirectApiDependencyArtifactFiles",
-        testIndirectApiDependencyArtifactFiles.map { it.name }.toSet()
+      "testIndirectApiDependencyArtifactFiles",
+      testIndirectApiDependencyArtifactFiles.map { it.name }.toSet()
     )
     logTitleStrings("mainAllDependencyArtifacts", mainAllDependencyArtifacts.map { it.name }.toSet())
     logTitleStrings("testAllDependencyArtifacts", testAllDependencyArtifacts.map { it.name }.toSet())
@@ -157,70 +157,70 @@ class ProjectDependencyResolver constructor(
     logTitleStrings("mainPermitUnusedDeclaredFiles", mainPermitUnusedDeclaredFiles.map { it.name }.toSet())
     logTitleStrings("testPermitUnusedDeclaredFiles", testPermitUnusedDeclaredFiles.map { it.name }.toSet())
     logTitleStrings(
-        "mainUnnecessaryPermitUnusedDeclaredFiles",
-        mainUnnecessaryPermitUnusedDeclaredFiles.map { it.name }.toSet()
+      "mainUnnecessaryPermitUnusedDeclaredFiles",
+      mainUnnecessaryPermitUnusedDeclaredFiles.map { it.name }.toSet()
     )
     logTitleStrings(
-        "testUnnecessaryPermitUnusedDeclaredFiles",
-        testUnnecessaryPermitUnusedDeclaredFiles.map { it.name }.toSet()
+      "testUnnecessaryPermitUnusedDeclaredFiles",
+      testUnnecessaryPermitUnusedDeclaredFiles.map { it.name }.toSet()
     )
     logTitleStrings(
-        "mainUnusedDeclaredButUsedByTestArtifactFiles",
-        mainUnusedDeclaredButUsedByTestArtifactFiles.map { it.name }.toSet()
+      "mainUnusedDeclaredButUsedByTestArtifactFiles",
+      mainUnusedDeclaredButUsedByTestArtifactFiles.map { it.name }.toSet()
     )
     logTitleStrings(
-        "testUnnecessaryDeclarationArtifactFiles",
-        testUnnecessaryDeclarationArtifactFiles.map { it.name }.toSet()
+      "testUnnecessaryDeclarationArtifactFiles",
+      testUnnecessaryDeclarationArtifactFiles.map { it.name }.toSet()
     )
 
     val mainUsedUndeclared = mainAllDependencyArtifacts
-        .filter { it.file in mainUsedUndeclaredArtifactFiles }
-        .toSet()
+      .filter { it.file in mainUsedUndeclaredArtifactFiles }
+      .toSet()
     val testUsedUndeclared =
-        testAllDependencyArtifacts
-            .filter { it.file in testUsedUndeclaredArtifactFiles }
-            .toSet()
+      testAllDependencyArtifacts
+        .filter { it.file in testUsedUndeclaredArtifactFiles }
+        .toSet()
 
     val mainUnusedDeclaredButUsedByTest =
-        mainAllDependencyArtifacts
-            .filter { it.file in mainUnusedDeclaredButUsedByTestArtifactFiles }
-            .toSet()
+      mainAllDependencyArtifacts
+        .filter { it.file in mainUnusedDeclaredButUsedByTestArtifactFiles }
+        .toSet()
     val mainUnusedDeclared = mainAllDependencyArtifacts.filter { it.file in mainUnusedDeclaredArtifactFiles }.toSet()
     val testUnusedDeclared = testAllDependencyArtifacts.filter { it.file in testUnusedDeclaredArtifactFiles }.toSet()
     val testUnnecessaryDeclarations =
-        testAllDependencyArtifacts
-            .filter { it.file in testUnnecessaryDeclarationArtifactFiles }
-            .toSet()
+      testAllDependencyArtifacts
+        .filter { it.file in testUnnecessaryDeclarationArtifactFiles }
+        .toSet()
 
     val mainUnnecessaryPermitUnusedDeclared =
-        mainAllDependencyArtifacts
-            .filter { it.file in mainUnnecessaryPermitUnusedDeclaredFiles }
-            .toSet()
+      mainAllDependencyArtifacts
+        .filter { it.file in mainUnnecessaryPermitUnusedDeclaredFiles }
+        .toSet()
     val testUnnecessaryPermitUnusedDeclared =
-        testAllDependencyArtifacts
-            .filter { it.file in testUnnecessaryPermitUnusedDeclaredFiles }
-            .toSet()
+      testAllDependencyArtifacts
+        .filter { it.file in testUnnecessaryPermitUnusedDeclaredFiles }
+        .toSet()
 
     return ProjectDependencyAnalysis(
-        mainUsedUndeclared,
-        testUsedUndeclared,
-        mainUnusedDeclaredButUsedByTest,
-        mainUnusedDeclared,
-        testUnusedDeclared,
-        testUnnecessaryDeclarations,
-        mainUnnecessaryPermitUnusedDeclared,
-        testUnnecessaryPermitUnusedDeclared
+      mainUsedUndeclared,
+      testUsedUndeclared,
+      mainUnusedDeclaredButUsedByTest,
+      mainUnusedDeclared,
+      testUnusedDeclared,
+      testUnnecessaryDeclarations,
+      mainUnnecessaryPermitUnusedDeclared,
+      testUnnecessaryPermitUnusedDeclared
     )
   }
 
   private fun getDependencyClasses(
-      classesDirs: Iterable<File>,
-      allDependencyArtifacts: Set<ResolvedArtifact>
+    classesDirs: Iterable<File>,
+    allDependencyArtifacts: Set<ResolvedArtifact>
   ):
       Set<String> {
     // Resource URLs are the list of full paths to source directories and dependency artifacts.
     val resourceUrls = classesDirs.map { it.toURI().toURL() }
-        .plus(allDependencyArtifacts.map { it.file.toURI().toURL() })
+      .plus(allDependencyArtifacts.map { it.file.toURI().toURL() })
 
     // Opening a class loader that references all sources and dependencies because we need to use reflection
     // to determine the supertype of each class.
@@ -252,28 +252,28 @@ class ProjectDependencyResolver constructor(
 
   private fun buildArtifactClassMap(dependencyArtifacts: Set<ResolvedArtifact>): Map<File, Set<String>> {
     return dependencyArtifacts
-        .map { it.file }
-        .filter { it.name.endsWith("jar") }
-        .associateWith { classAnalyzer.analyze(it.toURI().toURL()) }
+      .map { it.file }
+      .filter { it.name.endsWith("jar") }
+      .associateWith { classAnalyzer.analyze(it.toURI().toURL()) }
   }
 
   private fun findIndirectApiModuleArtifacts(
-      inputArtifacts: Set<ResolvedArtifact>,
-      allArtifacts: Set<ResolvedArtifact>
+    inputArtifacts: Set<ResolvedArtifact>,
+    allArtifacts: Set<ResolvedArtifact>
   ): Set<ResolvedArtifact> {
     val artifactNames =
-        inputArtifacts.map { it.id.componentIdentifier }
-            // Filters to dependencies that are other projects, verses third party dependencies.
-            .filterIsInstance<ProjectComponentIdentifier>()
-            // Maps to the actual Gradle project of the dependency.
-            .map { project.project(it.projectPath) }
-            // The "api" config from each project.
-            .map { it.configurations.getByName("api") }
-            // The "api" dependencies.
-            .flatMap { it.dependencies }
-            // Mapping to the artifact name.
-            .map { "${it.name}-${it.version}.jar" }
-            .toSet()
+      inputArtifacts.map { it.id.componentIdentifier }
+        // Filters to dependencies that are other projects, verses third party dependencies.
+        .filterIsInstance<ProjectComponentIdentifier>()
+        // Maps to the actual Gradle project of the dependency.
+        .map { project.project(it.projectPath) }
+        // The "api" config from each project.
+        .map { it.configurations.getByName("api") }
+        // The "api" dependencies.
+        .flatMap { it.dependencies }
+        // Mapping to the artifact name.
+        .map { "${it.name}-${it.version}.jar" }
+        .toSet()
 
     val outputArtifacts = allArtifacts.filter { it.file.name in artifactNames }.toSet()
     return if (outputArtifacts.isEmpty()) {
@@ -284,12 +284,12 @@ class ProjectDependencyResolver constructor(
   }
 
   private fun findIndirectApiModuleArtifactFiles(
-      dependencies: Set<ResolvedDependency>,
-      allArtifacts: Set<ResolvedArtifact>
+    dependencies: Set<ResolvedDependency>,
+    allArtifacts: Set<ResolvedArtifact>
   ): Set<File> {
     return findIndirectApiModuleArtifacts(
-        dependencies.flatMap { it.moduleArtifacts }.toSet(),
-        allArtifacts
+      dependencies.flatMap { it.moduleArtifacts }.toSet(),
+      allArtifacts
     ).map { it.file }.toSet()
   }
 
