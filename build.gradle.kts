@@ -15,6 +15,7 @@ allprojects {
 }
 
 java {
+    withJavadocJar()
     withSourcesJar()
 }
 
