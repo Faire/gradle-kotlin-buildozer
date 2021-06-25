@@ -75,6 +75,8 @@ allprojects {
 ```
 
 # Limitations
+## Unrecognized Dependencies
+
 There are some dependencies that cannot be detected by inspecting the generated class files. In these cases, the tool will prompt you to remove a dependency, but removing it will result in a compile error. For this you can use `permitUnusedDeclared` and `permitTestUnusedDeclared` to work around it.
 ```
 permitUnusedDeclared(project(":core:core-session"))
@@ -87,3 +89,7 @@ Execution failed for task ':core:analyzeDependencies'.
   Main dependency is listed as permitUnusedDeclared() but does not need to be -- remove its permitUnusedDeclared() configuration in build.gradle.kts: 
    - com.faire:core-persistence:1.0.SNAPSHOT@jar
 ```
+
+## Toolchains
+If your project is using toolchains (i.e. https://docs.gradle.org/current/userguide/toolchains.html), then it is currenty incompatible with this plugin.
+
