@@ -15,8 +15,9 @@ allprojects {
 }
 
 java {
-  withJavadocJar()
-  withSourcesJar()
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(16))
+  }
 }
 
 dependencies {
