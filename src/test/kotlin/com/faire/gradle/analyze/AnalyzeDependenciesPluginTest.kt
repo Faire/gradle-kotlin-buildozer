@@ -951,15 +951,7 @@ internal fun createBuildFileForKotlinProjectUsingPlugin(
   return File(rootDir, "build.gradle.kts").apply {
     writeText(
       """
-        buildscript {
-          repositories {
-            mavenCentral()
-          }
-          dependencies {
-            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}")
-          }
-        }
-
+        $BUILDSCRIPT
         plugins {
           kotlin("jvm") version "${KOTLIN_VERSION}"
           id("com.faire.analyze.analyzedependencies")
