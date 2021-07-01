@@ -107,16 +107,16 @@ open class AnalyzeDependenciesTask : DefaultTask() {
     const val MAIN_USED_UNDECLARED_MSG = "Main dependencies used, but not declared in gradle"
     const val TEST_USED_UNDECLARED_MSG = "Test dependencies used, but not declared in gradle"
     const val MAIN_UNUSED_DECLARED_BUT_USED_BY_TEST_MSG = "Main dependencies not used, but are used by test" +
-            " -- e.g. change implementation() to testImplementation() in build.gradle.kts"
+        " -- e.g. change implementation() to testImplementation() in build.gradle.kts"
     const val MAIN_UNUSED_DECLARED_MSG = "Main dependencies not used, but declared in gradle" +
-            " -- remove implementation()/api() references in build.gradle.kts"
+        " -- remove implementation()/api() references in build.gradle.kts"
     const val TEST_UNUSED_DECLARED_MSG = "Test dependencies not used, but declared in gradle" +
-            " -- remove testImplementation()/testApi() references in build.gradle.kts"
+        " -- remove testImplementation()/testApi() references in build.gradle.kts"
     const val TEST_UNNECESSARY_DECLARATIONS_MSG = "Test dependencies already declared by main" +
-            " -- remove testImplementation()/testApi() references in build.gradle.kts"
+        " -- remove testImplementation()/testApi() references in build.gradle.kts"
     const val MAIN_UNNECESSARY_PERMIT_UNUSED_DECLARED_MSG = "Main dependency is listed as permitUnusedDeclared()" +
-            " but does not need to be -- remove its permitUnusedDeclared() configuration in build.gradle.kts"
+        " but does not need to be -- remove its permitUnusedDeclared() configuration in build.gradle.kts"
     const val TEST_UNNECESSARY_PERMIT_UNUSED_DECLARED_MSG = "Test dependency is listed as permitTestUnusedDeclared()" +
-            " but does not need to be -- remove its permitTestUnusedDeclared() configuration in build.gradle.kts"
+        " but does not need to be -- remove its permitTestUnusedDeclared() configuration in build.gradle.kts"
   }
 }
