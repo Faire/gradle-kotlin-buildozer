@@ -2,7 +2,6 @@ plugins {
   kotlin("jvm") version Versions.kotlin
   `kotlin-dsl`
   `java-gradle-plugin`
-  `maven-publish`
   id("com.gradle.plugin-publish") version "0.14.0"
 }
 
