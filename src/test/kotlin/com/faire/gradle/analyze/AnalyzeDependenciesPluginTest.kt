@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-val KOTLIN_VERSION = "1.4.10"
+val KOTLIN_VERSION = "1.4.30"
 
 val BUILDSCRIPT = """
     buildscript {
@@ -20,6 +20,26 @@ val BUILDSCRIPT = """
       }
     }
   """
+
+val MAIN_UNUSED_ERROR_LINE =
+  "  Main dependencies not used, but declared in gradle -- remove implementation()/api() references in build.gradle.kts: "
+
+val TEST_UNUSED_ERROR_LINE =
+  "  Test dependencies not used, but declared in gradle -- remove testImplementation()/testApi() references in build.gradle.kts: "
+
+val MAIN_UNUSED_DECLARED_BY_TEST_LINE =
+  "  Main dependencies not used, but are used by test -- e.g. change implementation() to testImplementation() in build.gradle.kts: "
+
+val REMOVE_PERMIT_TEST_LINE =
+  "  Test dependency is listed as permitTestUnusedDeclared() but does not need to be -- remove its permitTestUnusedDeclared() configuration in build.gradle.kts: "
+
+val REMOVE_PERMIT_MAIN_LINE =
+  "  Main dependency is listed as permitUnusedDeclared() but does not need to be -- remove its permitUnusedDeclared() configuration in build.gradle.kts: "
+
+val UNNECESSARY_TEST_LINE =
+  "  Test dependencies already declared by main -- remove testImplementation()/testApi() references in build.gradle.kts: "
+
+val BOILERPLATE_ERROR_LINES = 7
 
 class AnalyzeDependenciesPluginTest {
   @get:Rule
@@ -54,22 +74,22 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFoo.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFoo {
-        BFoo(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFoo {
+         BFoo(AFoo a) {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(":moduleA"))
 
@@ -92,22 +112,22 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFooTest.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFooTest {
-        BFooTest(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFooTest {
+         BFooTest(AFoo a) {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(), testDependencies = listOf(":moduleA"))
 
@@ -132,32 +152,32 @@ class AnalyzeDependenciesPluginTest {
     testDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFoo.java").writeText(
       """
-      package com.faire.b;
-      
-      import com.faire.a.AFoo;
-      
-      public class BFoo {
-        BFoo(AFoo aFoo) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+
+       import com.faire.a.AFoo;
+
+       public class BFoo {
+         BFoo(AFoo aFoo) {}
+       }
+     """.trimIndent()
     )
     File(testDirB, "BFooTest.java").writeText(
       """
-      package com.faire.b;
-      
-      public class BFooTest {
-        BFooTest() {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+
+       public class BFooTest {
+         BFooTest() {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(":moduleA"), testDependencies = listOf(":moduleA"))
 
@@ -174,9 +194,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  testUnnecessaryDeclarations: ")
+    assertThat(failureListingLines[1]).isEqualTo(UNNECESSARY_TEST_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -189,32 +209,32 @@ class AnalyzeDependenciesPluginTest {
     testDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFoo.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFoo {
-        BFoo(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFoo {
+         BFoo(AFoo a) {}
+       }
+     """.trimIndent()
     )
     File(testDirB, "BFooTest.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFooTest {
-        BFooTest(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFooTest {
+         BFooTest(AFoo a) {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(":moduleA"), testDependencies = listOf(":moduleA"))
 
@@ -231,9 +251,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  testUnnecessaryDeclarations: ")
+    assertThat(failureListingLines[1]).isEqualTo(UNNECESSARY_TEST_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -274,9 +294,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  mainUnusedDeclaredArtifacts: ")
+    assertThat(failureListingLines[1]).isEqualTo(MAIN_UNUSED_ERROR_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -287,20 +307,20 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-          package com.faire.a;
-          public class AFoo {
-          }
-        """.trimIndent()
+           package com.faire.a;
+           public class AFoo {
+           }
+         """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFooTest.java").writeText(
       """
-          package com.faire.b;
-          
-          public class BFooTest {
-          }
-        """.trimIndent()
+           package com.faire.b;
+
+           public class BFooTest {
+           }
+         """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(), testDependencies = listOf(":moduleA"))
 
@@ -317,9 +337,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  testUnusedDeclaredArtifacts: ")
+    assertThat(failureListingLines[1]).isEqualTo(TEST_UNUSED_ERROR_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -332,34 +352,34 @@ class AnalyzeDependenciesPluginTest {
     srcDirC.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          interface AFoo {
-            fun execute()
-          }
-        """.trimIndent()
+           package com.faire.a
+           interface AFoo {
+             fun execute()
+           }
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo : AFoo {
-            override fun execute() {}
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo : AFoo {
+             override fun execute() {}
+           }
+         """.trimIndent()
     )
     File(srcDirC, "CFoo.kt").writeText(
       """
-      package com.faire.c
-      import com.faire.b.BFoo
-      
-      class CFoo constructor(private val a: BFoo) {
-        fun someMethod() {
-          a.execute()
-        }
-      }
-    """.trimIndent()
+       package com.faire.c
+       import com.faire.b.BFoo
+
+       class CFoo constructor(private val a: BFoo) {
+         fun someMethod() {
+           a.execute()
+         }
+       }
+     """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -385,23 +405,23 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun execute(a: AFoo) {
-              println(a)
-            }
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun execute(a: AFoo) {
+               println(a)
+             }
+           }
+         """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -420,9 +440,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  mainUnusedDeclaredButUsedByTest: ")
+    assertThat(failureListingLines[1]).isEqualTo(MAIN_UNUSED_DECLARED_BY_TEST_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -433,23 +453,23 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun execute(a: AFoo) {
-              println(a)
-            }
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun execute(a: AFoo) {
+               println(a)
+             }
+           }
+         """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -468,9 +488,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  mainUnusedDeclaredButUsedByTest: ")
+    assertThat(failureListingLines[1]).isEqualTo(MAIN_UNUSED_DECLARED_BY_TEST_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -481,25 +501,25 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          
-          object AConstants {
-            const val FOO: Long = 1
-          }
-        """.trimIndent()
+           package com.faire.a
+
+           object AConstants {
+             const val FOO: Long = 1
+           }
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AConstants
-          
-          class BFoo {
-            fun execute() {
-              println(AConstants.FOO)
-            }
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AConstants
+
+           class BFoo {
+             fun execute() {
+               println(AConstants.FOO)
+             }
+           }
+         """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -524,25 +544,25 @@ class AnalyzeDependenciesPluginTest {
     testDirB.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          
-          object AConstants {
-            const val FOO: Long = 1
-          }
-        """.trimIndent()
+           package com.faire.a
+
+           object AConstants {
+             const val FOO: Long = 1
+           }
+         """.trimIndent()
     )
     File(testDirB, "BFooTest.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AConstants
-          
-          class BFooTest {
-            fun execute() {
-              println(AConstants.FOO)
-            }
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AConstants
+
+           class BFooTest {
+             fun execute() {
+               println(AConstants.FOO)
+             }
+           }
+         """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -572,22 +592,22 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFoo.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFoo {
-        BFoo(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFoo {
+         BFoo(AFoo a) {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleB, listOf(":moduleA"), permitUnusedDeclared = listOf(":moduleA"))
 
@@ -604,9 +624,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  mainUnnecessaryPermitUnusedDeclaredArtifacts: ")
+    assertThat(failureListingLines[1]).isEqualTo(REMOVE_PERMIT_MAIN_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -617,22 +637,22 @@ class AnalyzeDependenciesPluginTest {
     srcDirB.mkdirs()
     File(srcDirA, "AFoo.java").writeText(
       """
-      package com.faire.a;
-      public class AFoo {
-      }
-    """.trimIndent()
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(directoryModuleA, listOf())
 
     File(srcDirB, "BFooTest.java").writeText(
       """
-      package com.faire.b;
-      import com.faire.a.AFoo;
-      
-      public class BFooTest {
-        BFooTest(AFoo a) {}
-      }
-    """.trimIndent()
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFooTest {
+         BFooTest(AFoo a) {}
+       }
+     """.trimIndent()
     )
     createBuildFileWithDependencies(
       directoryModuleB,
@@ -654,9 +674,9 @@ class AnalyzeDependenciesPluginTest {
       result.output.substringAfterLast("Execution failed for task ':moduleB:analyzeDependencies'.")
     val failureListingLines = buildOutputSuffix.lines().filter { it.isNotEmpty() }
     assertThat(failureListingLines[0]).isEqualTo("> Dependency analysis found issues.")
-    assertThat(failureListingLines[1]).isEqualTo("  testUnnecessaryPermitUnusedDeclaredArtifacts: ")
+    assertThat(failureListingLines[1]).isEqualTo(REMOVE_PERMIT_TEST_LINE)
     assertThat(failureListingLines[2]).isEqualTo("   - com.faire:moduleA:1.0@jar")
-    assertThat(failureListingLines.size).isEqualTo(8)
+    assertThat(failureListingLines.size).isEqualTo(BOILERPLATE_ERROR_LINES + 2)
   }
 
   @Test
@@ -669,32 +689,32 @@ class AnalyzeDependenciesPluginTest {
     srcDirC.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun someMethod(a: AFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun someMethod(a: AFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirC, "CFoo.kt").writeText(
       """
-      package com.faire.c
-      
-      import com.faire.a.AFoo
-      import com.faire.b.BFoo
-      
-      class CFoo {
-        fun someMethod(a: AFoo, b: BFoo) {}
-      }
-    """.trimIndent()
+       package com.faire.c
+
+       import com.faire.a.AFoo
+       import com.faire.b.BFoo
+
+       class CFoo {
+         fun someMethod(a: AFoo, b: BFoo) {}
+       }
+     """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -722,32 +742,32 @@ class AnalyzeDependenciesPluginTest {
     srcDirC.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun someMethod(a: AFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun someMethod(a: AFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirC, "CFoo.kt").writeText(
       """
-      package com.faire.c
-      
-      import com.faire.a.AFoo
-      import com.faire.b.BFoo
-      
-      class CTestFoo {
-        fun someMethod(a: AFoo, b: BFoo) {}
-      }
-    """.trimIndent()
+       package com.faire.c
+
+       import com.faire.a.AFoo
+       import com.faire.b.BFoo
+
+       class CTestFoo {
+         fun someMethod(a: AFoo, b: BFoo) {}
+       }
+     """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -777,45 +797,45 @@ class AnalyzeDependenciesPluginTest {
     srcDirD.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun someMethod(a: AFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun someMethod(a: AFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirC, "CFoo.kt").writeText(
       """
-          package com.faire.c
-          
-          import com.faire.a.AFoo
-          import com.faire.b.BFoo
-          
-          class CFoo {
-            fun someMethod(a: AFoo, b: BFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.c
+
+           import com.faire.a.AFoo
+           import com.faire.b.BFoo
+
+           class CFoo {
+             fun someMethod(a: AFoo, b: BFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirD, "DFoo.kt").writeText(
       """
-      package com.faire.d
-      
-      import com.faire.a.AFoo
-      import com.faire.b.BFoo
-      import com.faire.c.CFoo
-      
-      class DFoo {
-        fun someMethod(a: AFoo, b: BFoo, c: CFoo) {}
-      }
-    """.trimIndent()
+       package com.faire.d
+
+       import com.faire.a.AFoo
+       import com.faire.b.BFoo
+       import com.faire.c.CFoo
+
+       class DFoo {
+         fun someMethod(a: AFoo, b: BFoo, c: CFoo) {}
+       }
+     """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
@@ -849,45 +869,45 @@ class AnalyzeDependenciesPluginTest {
     srcDirD.mkdirs()
     File(srcDirA, "AFoo.kt").writeText(
       """
-          package com.faire.a
-          class AFoo {}
-        """.trimIndent()
+           package com.faire.a
+           class AFoo {}
+         """.trimIndent()
     )
     File(srcDirB, "BFoo.kt").writeText(
       """
-          package com.faire.b
-          
-          import com.faire.a.AFoo
-          
-          class BFoo {
-            fun someMethod(a: AFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.b
+
+           import com.faire.a.AFoo
+
+           class BFoo {
+             fun someMethod(a: AFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirC, "CFoo.kt").writeText(
       """
-          package com.faire.c
-          
-          import com.faire.a.AFoo
-          import com.faire.b.BFoo
-          
-          class CFoo {
-            fun someMethod(a: AFoo, b: BFoo) {}
-          }
-        """.trimIndent()
+           package com.faire.c
+
+           import com.faire.a.AFoo
+           import com.faire.b.BFoo
+
+           class CFoo {
+             fun someMethod(a: AFoo, b: BFoo) {}
+           }
+         """.trimIndent()
     )
     File(srcDirD, "DFoo.kt").writeText(
       """
-      package com.faire.d
-      
-      import com.faire.a.AFoo
-      import com.faire.b.BFoo
-      import com.faire.c.CFoo
-      
-      class DTestFoo {
-        fun someMethod(a: AFoo, b: BFoo, c: CFoo) {}
-      }
-    """.trimIndent()
+       package com.faire.d
+
+       import com.faire.a.AFoo
+       import com.faire.b.BFoo
+       import com.faire.c.CFoo
+
+       class DTestFoo {
+         fun someMethod(a: AFoo, b: BFoo, c: CFoo) {}
+       }
+     """.trimIndent()
     )
 
     createBuildFileWithDependencies(directoryModuleA, listOf())
