@@ -2,6 +2,7 @@ plugins {
   kotlin("jvm") version Versions.kotlin
   `kotlin-dsl`
   `java-gradle-plugin`
+  id("maven-publish")
   id("com.gradle.plugin-publish") version "0.14.0"
 }
 
@@ -48,9 +49,4 @@ pluginBundle {
   website = "https://github.com/Faire/gradle-kotlin-buildozer"
   vcsUrl = "https://github.com/Faire/gradle-kotlin-buildozer"
   tags = listOf("dependency", "verification", "analyze")
-
-  mavenCoordinates {
-    groupId = "com.faire.gradle.analyze"
-    artifactId = "gradle-kotlin-buildozer"
-  }
 }
