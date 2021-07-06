@@ -13,13 +13,6 @@ Thanks to https://gist.github.com/wfhartford and https://github.com/kellyrob99 f
 The plugin is available from the gradle plugin repository. See the instructions here for how to include it in your project.
 https://plugins.gradle.org/plugin/com.faire.gradle.analyze
 
-# Usage
-```
-allprojects {
-  apply<com.faire.gradle.analyze.AnalyzeDependenciesPlugin>()
-}
-```
-
 Applying this project adds the task `analyzeDependencies` to your projects. 
 
 ## Example output
@@ -89,7 +82,4 @@ Execution failed for task ':core:analyzeDependencies'.
   Main dependency is listed as permitUnusedDeclared() but does not need to be -- remove its permitUnusedDeclared() configuration in build.gradle.kts: 
    - com.faire:core-persistence:1.0.SNAPSHOT@jar
 ```
-
-## Toolchains
-If your project is using toolchains (i.e. https://docs.gradle.org/current/userguide/toolchains.html), then it is currenty incompatible with this plugin.
 
