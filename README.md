@@ -70,8 +70,10 @@ allprojects {
 # Limitations
 ## Unrecognized Dependencies
 
-There are some dependencies that cannot be detected by inspecting the generated class files. In these cases, the tool will prompt you to remove a dependency, but removing it will result in a compile error. For this you can use `permitUnusedDeclared` and `permitTestUnusedDeclared` to work around it.
+There are some dependencies that cannot be detected by inspecting the generated class files. In these cases, the tool will prompt you to remove a dependency, but removing it will result in a compile error. When this happens, you can add `permitUnusedDeclared` or `permitTestUnusedDeclared` to work around it.  For example:
 ```
+implementation(project(":core:core-session:"))
+// needed to avoid dependency analysis failure
 permitUnusedDeclared(project(":core:core-session"))
 ```
 
