@@ -7,6 +7,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -28,6 +29,9 @@ open class AnalyzeDependenciesTask : DefaultTask() {
 
   @Input
   var includedPackageFilters: List<String> = listOf()
+
+  @OutputFile
+  var outFile = project.buildDir.resolve("buildozerOutput.txt")
 
   private fun applyAnalysisResultToBuffer(
     outputBuffer: StringBuffer,
@@ -98,6 +102,9 @@ open class AnalyzeDependenciesTask : DefaultTask() {
       analysis.testUnnecessaryPermitUnusedDeclaredArtifacts,
       TEST_UNNECESSARY_PERMIT_UNUSED_DECLARED_MSG
     )
+
+    val output = buffer.toString()
+    outFile.writeText(output)
 
     if (!buffer.isEmpty()) {
       val message = "Dependency analysis found issues.\n$buffer"
