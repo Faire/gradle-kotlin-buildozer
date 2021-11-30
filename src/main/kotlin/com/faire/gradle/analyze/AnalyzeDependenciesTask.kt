@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
@@ -23,6 +24,11 @@ open class AnalyzeDependenciesTask : DefaultTask() {
   @InputFiles
   @PathSensitive(PathSensitivity.RELATIVE)
   var testClassesDirs: FileCollection = project.files()
+
+  // Using the buildFile as an input so that if you change any dependencies we invalidate analysis cache.
+  @InputFile
+  @PathSensitive(PathSensitivity.RELATIVE)
+  var buildFile = project.buildFile
 
   @Input
   var justWarn: Boolean = false
