@@ -8,11 +8,11 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class DependencyAnalysisException(message: String) : GradleException(message)
 
@@ -28,18 +28,8 @@ open class AnalyzeDependenciesTask : DefaultTask() {
 
   // Using the buildFile as an input so that if you change any dependencies we invalidate analysis cache.
   @InputFile
-  // Sometimes gradle thinks there is a project at a location with no build file. Use optional here to make sure
-  // it doesn't fail in those cases. It would probably be better to figure out why this was happening, but there's
-  // no time for that!
-  // The situation I had was as follows
-  //    foo (no build file here)
-  //    foo/bar1 (has build file)
-  //    foo/bar2 (has build file)
-  //
-  // Running ./gradlew analyzeDependencies would fail at :foo:analyzeDependencies
-  @Optional
   @PathSensitive(PathSensitivity.RELATIVE)
-  var buildFile = project.buildFile
+  var buildFile: File? = project.buildFile
 
   @Input
   var justWarn: Boolean = false

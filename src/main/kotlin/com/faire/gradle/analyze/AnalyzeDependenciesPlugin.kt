@@ -16,6 +16,18 @@ class AnalyzeDependenciesPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     val extension = project.extensions.create<AnalyzeDependenciesPluginExtension>("analyzeDependencies")
 
+    // If we have a directory that doesn't have a build-file, the analyze task is going to fail.
+    // Sometimes gradle thinks there is a project at a location with no build file.
+    // The situation I had was as follows
+    //    foo (no build file here)
+    //    foo/bar1 (has build file)
+    //    foo/bar2 (has build file)
+    //
+    // Running ./gradlew analyzeDependencies would fail at :foo:analyzeDependencies
+    if (!project.buildFile.exists()) {
+      return
+    }
+
     project.configurations.create("permitUnusedDeclared")
     project.configurations.create("permitTestUnusedDeclared")
 
@@ -37,3 +49,4 @@ class AnalyzeDependenciesPlugin : Plugin<Project> {
     }
   }
 }
+

@@ -928,6 +928,51 @@ class AnalyzeDependenciesPluginTest {
 
     assertThat(result.output).contains("BUILD SUCCESSFUL")
   }
+
+  @Test
+  fun `Parent directory without a build file`() {
+    val parentDir = File(testProjectDir.root, "parent")
+    parentDir.mkdirs()
+    val moduleOne = File(parentDir, "moduleOne")
+    val moduleTwo = File(parentDir, "moduleTwo")
+    moduleOne.mkdirs()
+    moduleTwo.mkdirs()
+
+    val srcDirA = File(moduleOne, "src/main/java")
+    val srcDirB = File(moduleTwo, "src/main/java")
+    srcDirA.mkdirs()
+    srcDirB.mkdirs()
+    File(srcDirA, "AFoo.java").writeText(
+      """
+       package com.faire.a;
+       public class AFoo {
+       }
+     """.trimIndent()
+    )
+    createBuildFileWithDependencies(moduleOne, listOf())
+
+    File(srcDirB, "BFoo.java").writeText(
+      """
+       package com.faire.b;
+       import com.faire.a.AFoo;
+
+       public class BFoo {
+         BFoo(AFoo a) {}
+       }
+     """.trimIndent()
+    )
+    createBuildFileWithDependencies(moduleTwo, listOf(":parent:moduleOne"))
+
+    createGradleSettingsFileWithModuleIncludes(testProjectDir.root, listOf(":parent:moduleOne", ":parent:moduleTwo"))
+
+    val result = GradleRunner.create()
+      .withProjectDir(testProjectDir.root)
+      .withArguments("analyzeDependencies")
+      .withPluginClasspath()
+      .build()
+
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
+  }
 }
 
 internal fun createGradleSettingsFileWithModuleIncludes(directory: File, modules: List<String>) {
