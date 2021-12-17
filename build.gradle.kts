@@ -8,7 +8,7 @@ plugins {
 
 allprojects {
   group = "com.faire.gradle"
-  version = "1.0.8"
+  version = "1.0.9"
 
   repositories {
     mavenCentral()
