@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-val KOTLIN_VERSION = "1.4.30"
+val KOTLIN_VERSION = "1.5.32"
 
 val BUILDSCRIPT = """
     buildscript {
@@ -39,7 +39,7 @@ val REMOVE_PERMIT_MAIN_LINE =
 val UNNECESSARY_TEST_LINE =
   "  Test dependencies already declared by main -- remove testImplementation()/testApi() references in build.gradle.kts: "
 
-val BOILERPLATE_ERROR_LINES = 7
+val BOILERPLATE_ERROR_LINES = 8
 
 class AnalyzeDependenciesPluginTest {
   @get:Rule
